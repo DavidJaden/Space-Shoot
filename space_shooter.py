@@ -42,12 +42,16 @@ ENEMY_TYPES = {
 
 enemies = []
 spawn_timer = 0
-spawn_rate = 60
+spawn_rate = 90
+
+# Stars
+stars = [(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(100)]
 
 # Game state
 score = 0
 lives = 3
 invincible = 0
+difficulty = 1
 
 # Fonts
 font_large = pygame.font.SysFont(None, 72)
@@ -66,7 +70,7 @@ game_state = STATE_MENU
 
 
 def reset_game():
-    global player_x, player_y, bullets, enemies, spawn_timer, score, lives, invincible
+    global player_x, player_y, bullets, enemies, spawn_timer, score, lives, invincible, difficulty, stars
     player_x = WIDTH // 2 - player_width // 2
     player_y = HEIGHT - player_height - 20
     bullets = []
@@ -75,6 +79,18 @@ def reset_game():
     score = 0
     lives = 3
     invincible = 0
+    difficulty = 1
+    stars = [(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(100)]
+
+
+def draw_stars():
+    for star in stars:
+        pygame.draw.circle(screen, WHITE, star, 1)
+
+
+def update_stars():
+    global stars
+    stars = [(x, (y + difficulty) % HEIGHT) for x, y in stars]
 
 
 def draw_player(x, y):
@@ -119,10 +135,12 @@ def draw_enemies():
 def draw_hud():
     screen.blit(font_small.render(f"Score: {score}", True, WHITE), (10, 10))
     screen.blit(font_small.render(f"Lives: {lives}", True, GREEN), (10, 40))
+    screen.blit(font_small.render(f"Level: {difficulty}", True, YELLOW), (10, 70))
 
 
 def draw_menu():
     screen.fill(BLACK)
+    draw_stars()
     title = font_large.render("SPACE SHOOTER", True, WHITE)
     screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 150))
     start_text = font_medium.render("Press ENTER to Start", True, YELLOW)
@@ -144,12 +162,15 @@ def draw_menu():
 
 def draw_game_over():
     screen.fill(BLACK)
+    draw_stars()
     over_text = font_large.render("GAME OVER", True, RED)
     screen.blit(over_text, (WIDTH // 2 - over_text.get_width() // 2, 180))
     score_text = font_medium.render(f"Score: {score}", True, WHITE)
     screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 280))
+    level_text = font_small.render(f"Level Reached: {difficulty}", True, YELLOW)
+    screen.blit(level_text, (WIDTH // 2 - level_text.get_width() // 2, 330))
     restart_text = font_small.render("Press ENTER to Play Again  |  Q to Quit", True, YELLOW)
-    screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, 360))
+    screen.blit(restart_text, (WIDTH // 2 - restart_text.get_width() // 2, 390))
     pygame.display.flip()
 
 
@@ -157,6 +178,7 @@ def draw_game_over():
 while True:
 
     if game_state == STATE_MENU:
+        update_stars()
         draw_menu()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -173,6 +195,7 @@ while True:
         continue
 
     if game_state == STATE_GAME_OVER:
+        update_stars()
         draw_game_over()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -200,6 +223,8 @@ while True:
                 game_state = STATE_MENU
 
     screen.fill(BLACK)
+    update_stars()
+    draw_stars()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] and player_x > 0:
@@ -211,17 +236,35 @@ while True:
         bullet[1] -= bullet_speed
     bullets = [b for b in bullets if b[1] > 0]
 
+    # Difficulty scaling
+    difficulty = 1 + score // 100
+    current_spawn_rate = max(20, spawn_rate - (difficulty * 5))
+    current_speed_boost = difficulty * 0.5
+
     spawn_timer += 1
-    if spawn_timer >= spawn_rate:
+    if spawn_timer >= current_spawn_rate:
         etype = random.choices([0, 1, 2], weights=[60, 30, 10])[0]
         cfg = ENEMY_TYPES[etype]
         ex = random.randint(0, WIDTH - cfg["width"])
         enemies.append([ex, -cfg["height"], etype, cfg["health"]])
         spawn_timer = 0
 
+    # Move enemies with difficulty speed boost
     for enemy in enemies:
-        enemy[1] += ENEMY_TYPES[enemy[2]]["speed"]
-    enemies = [e for e in enemies if e[1] < HEIGHT]
+        enemy[1] += ENEMY_TYPES[enemy[2]]["speed"] + current_speed_boost
+    
+    # Enemies passing bottom lose a life
+    surviving = []
+    for e in enemies:
+        if e[1] < HEIGHT:
+            surviving.append(e)
+        else:
+            if invincible == 0:
+                lives -= 1
+                invincible = 90
+                if lives <= 0:
+                    game_state = STATE_GAME_OVER
+    enemies = surviving
 
     # Bullet vs enemy collision
     bullets_to_remove = []
