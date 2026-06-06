@@ -3,11 +3,11 @@ A 2D space shooter game built with Python and Pygame as part of the SEO Tech Dev
 
 ## Features
 - Three enemy types: Standard, Fast, and Tank with varying speed and health
-- Three boss types: Tank, Speeder, and Shooter — spawns every 5 levels with increasing difficulty
+- Three boss types: Tank, Speeder, and Shooter - spawns every 5 levels with increasing difficulty
 - Dual boss encounters unlocked at level 10+
-- Power up system — double bullets, shield, and speed boost drop after first boss kill
-- Bullet damage scaling — damage increases every 5 levels
-- Difficulty scaling — enemies spawn faster and move quicker as score increases
+- Power up system - double bullets, shield, and speed boost drop after first boss kill
+- Bullet damage scaling - damage increases every 5 levels
+- Difficulty scaling - enemies spawn faster and move quicker as score increases
 - Enemy speed capped to prevent impossible difficulty at high levels
 - Lives system with invincibility frames
 - Continue from last level reached on game over
@@ -27,13 +27,13 @@ A 2D space shooter game built with Python and Pygame as part of the SEO Tech Dev
 4. Run: `python3 space_shooter.py`
 
 ## Controls
-- Left / Right arrow keys — move ship
-- Spacebar — shoot
-- Escape — pause game
-- Q — quit to menu while paused
-- Backtick (~) — open dev console
-- R on game over — restart from level 1
-- Enter on game over — continue from highest level reached
+- Left / Right arrow keys - move ship
+- Spacebar - shoot
+- Escape - pause game
+- Q - quit to menu while paused
+- Backtick (~) - open dev console
+- R on game over - restart from level 1
+- Enter on game over - continue from highest level reached
 
 ## Dev Console
 Press backtick to open. Type Jab followed by a number to skip to any level.
