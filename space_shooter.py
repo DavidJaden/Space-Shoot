@@ -400,6 +400,21 @@ def draw_dev_console():
     label = font_tiny.render(f"Code: {dev_input}_", True, YELLOW)
     screen.blit(label, (WIDTH - 215, HEIGHT - 30))
 
+def apply_random_powerup():
+    global double_bullet, double_bullet_timer, shield_active, shield_timer
+    global speed_boost_active, speed_boost_timer, player_speed
+    ptype = random.randint(0, 2)
+    powerup_sound.play()
+    if ptype == 0:
+        double_bullet = True
+        double_bullet_timer = 300
+    elif ptype == 1:
+        shield_active = True
+        shield_timer = 300
+    elif ptype == 2:
+        speed_boost_active = True
+        speed_boost_timer = 300
+        player_speed = player_base_speed + 4
 
 def update_bosses():
     global boss_active, boss_warning_timer, lives, invincible
@@ -445,9 +460,9 @@ def update_bosses():
                 if boss["health"] <= 0:
                     score += 50
                     explosion_sound.play()
-                    drop_powerup(int(boss["x"]) + BOSS_WIDTH // 2, int(boss["y"]) + BOSS_HEIGHT // 2)
                     if not first_boss_killed:
                         first_boss_killed = True
+                    apply_random_powerup()
                     bosses.remove(boss)
                     break
 
@@ -591,7 +606,7 @@ def draw_menu():
         (YELLOW, "2x — Double bullets"),
         (BLUE,   "S  — Shield"),
         (PINK,   ">> — Speed boost"),
-        (WHITE,  "Drops after first boss"),
+        (WHITE,  "Auto applied on boss kill"),
     ]
     for i, (color, label) in enumerate(pu_types):
         surf = font_tiny.render(label, True, color)
@@ -743,7 +758,8 @@ while True:
         if spawn_timer >= current_spawn_rate:
             etype = random.choices([0, 1, 2], weights=[60, 30, 10])[0]
             cfg = ENEMY_TYPES[etype]
-            edge_buffer = 120
+            # Dynamic edge buffer scales with difficulty per TA recommendation
+            edge_buffer = min(120 + (difficulty * 10), WIDTH // 3)
             ex = random.randint(edge_buffer, WIDTH - cfg["width"] - edge_buffer)
             enemies.append([ex, -cfg["height"], etype, cfg["health"]])
             spawn_timer = 0
@@ -756,15 +772,11 @@ while True:
             if e[1] < HEIGHT:
                 surviving.append(e)
             else:
-                ex = e[0]
-                left_bound = WIDTH * 0.2
-                right_bound = WIDTH * 0.8
-                if left_bound < ex < right_bound:
-                    if invincible == 0:
-                        lives -= 1
-                        invincible = 90
-                        if lives <= 0:
-                            game_state = STATE_GAME_OVER
+                if invincible == 0:
+                    lives -= 1
+                    invincible = 90
+                    if lives <= 0:
+                        game_state = STATE_GAME_OVER
         enemies = surviving
 
         bullets_to_remove = []
